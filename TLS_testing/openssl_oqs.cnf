@@ -1,0 +1,22 @@
+openssl_conf = openssl_init
+
+[openssl_init]
+ssl_conf = ssl_sect
+providers = provider_sect
+
+[provider_sect]
+default = default_sect
+oqsprovider = oqs_sect
+
+[default_sect]
+activate = 1
+
+[oqs_sect]
+activate = 1
+
+[ssl_sect]
+system_default = system_default_sect
+
+[system_default_sect]
+Groups = mlkem768:x25519
+SignatureAlgorithms = mldsa44:mldsa65:mldsa87:rsa_pss_rsae_sha256:rsa_pkcs1_sha256:ecdsa_secp256r1_sha256:ecdsa_secp384r1_sha384:ed25519

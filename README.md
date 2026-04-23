@@ -17,7 +17,7 @@ A comprehensive testbed for evaluating Post-Quantum Cryptography in TLS handshak
 | Category | Algorithms |
 |----------|-----------|
 | **Key Exchange (KEM)** | X25519, ML-KEM-512, ML-KEM-768, ML-KEM-1024, X25519MLKEM768 (hybrid) |
-| **Digital Signatures** | RSA-3072, RSA-4096, ECDSA P-256, ECDSA P-384, Ed25519, ML-DSA-44, ML-DSA-65, ML-DSA-87 |
+| **Digital Signatures** | RSA-3072, RSA-4096, Ed25519, ML-DSA-44, ML-DSA-65, ML-DSA-87 |
 
 ---
 
@@ -113,38 +113,6 @@ This generates certificate chains for all supported signature algorithms under `
 - `certs/mldsa87/` — ML-DSA-87
 
 Each directory contains: `ca_cert.pem`, `ca_key.pem`, `server_cert.pem`, `server_key.pem`, `client_cert.pem`, `client_key.pem`.
-
----
-
-## Quick Test
-
-Verify everything works with a basic PQC handshake:
-
-```bash
-cd TLS_testing
-export LD_LIBRARY_PATH=$PWD/../openssl-3.5.0
-
-# Terminal 1 — Start the server (hybrid mode)
-./build/pqc_server \
-    -c certs/rsa/server_cert.pem \
-    -k certs/rsa/server_key.pem \
-    -a certs/rsa/ca_cert.pem \
-    -g X25519MLKEM768
-
-# Terminal 2 — Connect with the PQC client
-./build/pqc_client \
-    -H 127.0.0.1 \
-    -g X25519MLKEM768 \
-    -C certs/rsa/ca_cert.pem \
-    -c certs/rsa/client_cert.pem \
-    -k certs/rsa/client_key.pem
-```
-
-You should see output including:
-```
-Negotiated Group Name: X25519MLKEM768
-PQC_METRIC_HANDSHAKE_MS <value>
-```
 
 ---
 

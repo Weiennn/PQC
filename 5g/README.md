@@ -1,6 +1,6 @@
 # 5G Open5GS Configuration for PQC Hybrid Methods
 
-This directory (`/5g`) contains scripts to manage an Open5GS 5G core network with support for both **classical TLS 1.2** and **PQC TLS 1.3** (X25519MLKEM768 + ML-DSA). It also includes a PQC Security Gateway (secGW) that sits between the simulated RAN (UERANSIM) and the 5G Core.
+This directory (`/5g`) contains scripts to manage an Open5GS 5G core network with support for both **classical TLS 1.3** and **PQC TLS 1.3** (X25519MLKEM768 + ML-DSA). It also includes a PQC Security Gateway (secGW) that sits between the simulated RAN (UERANSIM) and the 5G Core.
 
 ## Quick Start
 
@@ -10,10 +10,10 @@ This directory (`/5g`) contains scripts to manage an Open5GS 5G core network wit
 
 # 2. Generate PQC certs (or use a different algo: mldsa44, mldsa87, rsa, ecdsa, ed25519)
 # Note: Cert generation scripts are inside the `setup scripts/` directory
-./setup scripts/generate_5g_certs.sh mldsa65
+./setup_scripts/generate_5g_certs.sh mldsa65
 
 # 3. Generate classical certs (for toggling back)
-./setup scripts/generate_5g_certs.sh rsa
+./setup_scripts/generate_5g_certs.sh rsa
 
 # 4. Switch to PQC mode
 sudo ./toggle_pqc.sh pqc mldsa65
@@ -33,11 +33,10 @@ sudo ./toggle_pqc.sh pqc mldsa65
 
 Open5GS has been **recompiled against OpenSSL 3.5.0** (at `~/Desktop/PQC/openssl-3.5.0/`).
 
-The same binary supports **both** TLS 1.2 and TLS 1.3 — switching is purely config-based:
 
 | Mode       | Certs       | Key Exchange   | TLS Version | OPENSSL_CONF        |
 |------------|-------------|----------------|-------------|---------------------|
-| Classical  | RSA / ECDSA | X25519         | TLS 1.2     | (none)              |
+| Classical  | RSA / ECDSA | X25519         | TLS 1.3     | (none)              |
 | PQC        | ML-DSA-65   | X25519MLKEM768 | TLS 1.3     | `openssl_pqc.cnf`   |
 
 The 5G testbed operates over a custom backhaul (dummy interfaces):
@@ -48,7 +47,7 @@ The 5G testbed operates over a custom backhaul (dummy interfaces):
 
 | Script/Directory         | Purpose                                                   |
 |--------------------------|-----------------------------------------------------------|
-| `setup scripts/`         | Contains initialization scripts (`generate_5g_certs.sh`, `enable_mtls.sh`, `update_nf_ips.sh`) |
+| `setup_scripts/`         | Contains initialization scripts (`generate_5g_certs.sh`, `enable_mtls.sh`, `update_nf_ips.sh`) |
 | `setup_backhaul.sh`      | Creates `ran0` and `core0` interfaces for network emulation |
 | `teardown_backhaul.sh`   | Cleans up the dummy backhaul network interfaces           |
 | `toggle_pqc.sh`          | Switch between PQC and classical mode (certs + systemd)   |
@@ -134,7 +133,7 @@ Traffic from the UERANSIM gNB (`10.0.1.1`) to the AMF (`10.0.2.5`) will be trans
 
 ## Network Function Configuration
 
-Config files live in `/etc/open5gs/` (not `/var/open5gs/`). The table below maps each NF to its config file and the key fields you are most likely to change:
+Config files live in `/etc/open5gs/`. The table below maps each NF to its config file and the key fields you are most likely to change:
 
 | NF | Config File | Key Configurable Fields |
 |----|-------------|------------------------|
@@ -355,16 +354,3 @@ sudo ethtool -K lo gro off lro off tso off
 ```
 
 > The SMF also sets `mtu: 1400` to account for GTP-U and IPSec overhead. Adjust if using the secGW (IPSec adds ~60–80 bytes of overhead).
-
----
-
-## Troubleshooting
-
-| Symptom | Likely Cause | Fix |
-|---------|-------------|-----|
-| gNB fails to connect to AMF | PLMN/TAC mismatch or wrong `ngapIp`/`amfConfigs.address` | Verify `mcc`, `mnc`, `tac` match in both configs |
-| UE registration rejected | IMSI/K/OPc not in subscriber DB, or PLMN mismatch | Check Web UI at http://localhost:9999 |
-| UE gets no IP address | `ogstun` not up, or `10.45.0.1` not assigned | Run `ip addr add 10.45.0.1/16 dev ogstun && ip link set ogstun up` |
-| TLS handshake failure | Cert/key mismatch or wrong CA | Re-run `generate_5g_certs.sh` and `toggle_pqc.sh` |
-| NF won't start (port in use) | Previous instance still running | `sudo ./off.sh` then re-run `./start.sh` |
-| PQC mode reverts after reboot | systemd env vars cleared | Re-run `sudo ./toggle_pqc.sh pqc mldsa65` |

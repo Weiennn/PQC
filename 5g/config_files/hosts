@@ -1,0 +1,24 @@
+127.0.0.1	localhost.localdomain	localhost
+::1		localhost6.localdomain6	localhost6
+
+# The following lines are desirable for IPv6 capable hosts
+::1     localhost ip6-localhost ip6-loopback
+fe00::0 ip6-localnet
+ff02::1 ip6-allnodes
+ff02::2 ip6-allrouters
+ff02::3 ip6-allhosts
+
+# Open5GS FQDN mappings for TLS
+10.0.2.5 amf.localdomain
+10.0.2.250 sepp1.localdomain
+10.0.2.4 smf.localdomain
+10.0.2.12 udm.localdomain
+10.0.2.251 sepp2.localdomain
+10.0.2.11 ausf.localdomain
+10.0.2.14 nssf.localdomain
+10.0.2.15 bsf.localdomain
+10.0.2.13 pcf.localdomain
+10.0.2.200 scp.localdomain
+10.0.2.20 udr.localdomain
+10.0.2.10 nrf.localdomain
+10.0.2.7 upf.localdomain

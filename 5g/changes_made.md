@@ -32,9 +32,14 @@ To enable hybrid Key Encapsulation Mechanism (KEM) methods, follow these steps:
     * **Update Protocols:** Change `http://` to `https://` for all SBI clients across all Open5GS NF configuration files (etc/open5gs/NF.yaml).
     * **Map FQDNs:** Map Fully Qualified Domain Names (FQDNs) to their corresponding IP addresses (e.g., `127.0.0.5 amf.localdomain`) in `/etc/hosts`. This is necessary because TLS requires the FQDN to match the certificate’s SAN/CN.
     * **Update URIs:** Update all configuration files to use the new `https://<NF>.localdomain` URIs in their respective "client" sections.
-    * **Modify Source Code (open5gs/lib/sbi/nghttp2-server.c):** Update `lib/sbi/nghttp2-server.c` (line 247). The current implementation:
+    * **Modify Source Code (open5gs/lib/sbi/nghttp2-server.c):** Update `lib/sbi/nghttp2-server.c` (line 247). The previous implementation:
       ```c
-      SSL_CTX_set1_curves_list(ssl_ctx, "p-256")
+      #if OPENSSL_VERSION_NUMBER >= 0x30000000L
+          if (SSL_CTX_set1_curves_list(ssl_ctx, "P-256") != 1) {
+              ogs_error("SSL_CTX_set1_curves_list failed: %s", ERR_error_string(ERR_get_error(), NULL));
+              return NULL;
+          }
+      #endif /* !(OPENSSL_VERSION_NUMBER >= 0x30000000L) */
       ```
       forces the SBI server to accept only the **p-256** curve. Modify this to accept a list of groups via an environment variable. Refer to current implementation for details.
     * **Modify Source Code (open5gs/lib/sbi/client.c):** Update `lib/sbi/client.c` to also accept an environment variable for TLS groups. Refer to current implementation for details.

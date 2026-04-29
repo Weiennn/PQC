@@ -26,7 +26,15 @@ To enable hybrid Key Encapsulation Mechanism (KEM) methods, follow these steps:
 
 3. **Recompile libnghttp2** Recompile `libnghttp2` against the new OpenSSL version. Use the /setup_scripts/build_nghttp2.sh script.
 
-4. **Recompile Open5GS** Recompile Open5GS using these custom versions of `libcurl` and `libnghttp2` (makefiles are located in the project library).
+4. **Recompile Open5GS** Recompile Open5GS using these custom versions of `libcurl` and `libnghttp2` (makefiles are located in the project library). Run the following commands:
+   ```bash
+   cd ~/Desktop/PQC/5g/open5gs
+   rm -rf builddir
+   PKG_CONFIG_PATH=/home/vboxuser/Desktop/PQC/openssl-3.5.0:/home/vboxuser/Desktop/PQC/5g/curl-install/lib/pkgconfig:/home/vboxuser/Desktop/PQC/5g/nghttp2-install/lib/pkgconfig \
+   meson setup builddir --prefix=/usr
+   ninja -C builddir
+   sudo ninja -C builddir install
+   ```
 
 5. **Configure the Open5GS Interface** Modify the Open5GS code for `libcurl` and `libnghttp2` to enable TLS and allow KEM and signature algorithms to be set as parameters within the Network Functions (NFs).
     * **Update Protocols:** Change `http://` to `https://` for all SBI clients across all Open5GS NF configuration files (etc/open5gs/NF.yaml).

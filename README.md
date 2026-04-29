@@ -1,18 +1,19 @@
-# Post-Quantum Cryptography (PQC) Research Testbed
+# Post-Quantum Cryptography (PQC) Research
 
-A comprehensive testbed for evaluating Post-Quantum Cryptography in TLS handshakes, IPSec VPNs, and 5G core networks. Uses **OpenSSL 3.5.0**'s native ML-KEM and ML-DSA support — no external PQC providers required.
+A comprehensive testbed for evaluating Post-Quantum Cryptography in TLS handshakes, IPSec VPNs, and 5G core networks. Uses **OpenSSL 3.5.0**'s native ML-KEM and ML-DSA support.
 
 ## What This Project Does
 
 | Module | Description |
 |--------|-------------|
-| **TLS Benchmarks** (`TLS_testing/`) | Custom C client/server measuring handshake latency, CPU usage, and throughput (HPS) across classical and PQC algorithms |
+| **TLS Benchmarks** (`TLS_testing/`) | Custom C client/server measuring handshake latency, CPU usage, and throughput (HPS) across classical and PQC algorithms (for both KEM and signatures) |
 | **Component Benchmarks** (`component_benches/`) | Isolated KEM/signature operation benchmarks (keygen, encaps, sign, verify) |
 | **IPSec PQC** (`ipsec_pqc/`) | StrongSwan VPN testbed with ML-KEM-768 key exchange via Linux network namespaces |
-| **5G Core** (`5g/`) | Open5GS + UERANSIM with PQC hybrid TLS (X25519MLKEM768) on the SBI interfaces |
-| **Security Gateway** (`5g/secgw/`) | PQC IPSec gateway protecting the RAN↔Core backhaul link |
+| **5G Core** (`5g/`) | Open5GS + UERANSIM end to end (UE to 5G core) with classical and PQC algorithm benchmark |
+| **Security Gateway** (`5g/secgw/`) | Module to enable PQC IPSec gateway protecting the RAN↔Core backhaul link |
 
 ## Supported Algorithms
+More algorithms can be added as long as they are supported by OpenSSL.
 
 | Category | Algorithms |
 |----------|-----------|
@@ -87,6 +88,8 @@ After building, verify the version:
 # Expected: OpenSSL 3.5.0 ...
 ```
 
+Alternatively, you can visit the OpenSSL library Github to find the latest version. For this project we just require OpenSSL v3.5.0+ as it natively includes hybrid and PQC algorithms.
+
 ### 3. Build the TLS Client/Server Binaries
 
 ```bash
@@ -118,11 +121,11 @@ Each directory contains: `ca_cert.pem`, `ca_key.pem`, `server_cert.pem`, `server
 
 ## Running Benchmarks
 
-All benchmark scripts should be run from inside the `TLS_testing/` directory.
+All benchmark scripts should be run from inside the `TLS_testing/` directory. Benchmark configurations (number of iterations, latecy etc) are found at the top of the file.
 
 ### TLS Handshake Latency & CPU
 
-Measures handshake time across multiple KEM algorithms with realistic network conditions (MTU 1500, 5ms delay, 0.1% loss):
+Measures handshake time across multiple KEM algorithms with realistic network conditions (MTU 1500, 5ms delay):
 
 ```bash
 cd TLS_testing
@@ -131,7 +134,7 @@ sudo ./benchmark.sh
 
 ### Consolidated Benchmark (All Combinations)
 
-Iterates over all signature × KEM combinations (28 total) measuring latency, CPU, and HPS:
+Iterates over all signature × KEM combinations measuring latency, CPU, and HPS:
 
 ```bash
 cd TLS_testing
@@ -140,7 +143,7 @@ sudo ./benchmark_consolidated.sh
 
 ### Handshakes Per Second (HPS)
 
-Stress-tests server throughput using parallel load generation:
+Tests server throughput using parallel load generation:
 
 ```bash
 cd TLS_testing
@@ -157,13 +160,11 @@ cd component_benches
 ./run_bench.sh
 ```
 
-> **Note**: `build_bench.sh` links against `local/lib` which requires the legacy OQS provider build. For the native OpenSSL 3.5.0 benchmark, use `native_pqc_bench.c`.
-
 ---
 
 ## IPSec PQC Testbed (`ipsec_pqc/`)
 
-Tests PQC key exchange (ML-KEM-768) in an IKEv2/IPSec tunnel using StrongSwan with liboqs.
+Tests PQC key exchange (ML-KEM-768) in an IKEv2/IPSec tunnel using StrongSwan with liboqs. No benchmarking has been done yet, this is just a POC that it works.
 
 ### Setup
 
@@ -222,7 +223,7 @@ sudo ./toggle_pqc.sh pqc mldsa65
 ./start.sh
 ```
 
-See [`5g/README.md`](5g/README.md) for the full 5G guide.
+See [`5g/README.md`](5g/README.md) for the full guide.
 
 ### Security Gateway (`5g/secgw/`)
 

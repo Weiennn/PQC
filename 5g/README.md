@@ -31,7 +31,7 @@ sudo ./toggle_pqc.sh pqc mldsa65
 
 ## Architecture
 
-Open5GS has been **recompiled against OpenSSL 3.5.0** (at `~/Desktop/PQC/openssl-3.5.0/`).
+Open5GS has been **recompiled against OpenSSL 3.5.0** (at `/PQC/openssl-3.5.0/`).
 
 
 | Mode       | Certs       | Key Exchange   | TLS Version | OPENSSL_CONF        |
@@ -47,7 +47,7 @@ The 5G testbed operates over a custom backhaul (dummy interfaces):
 
 | Script/Directory         | Purpose                                                   |
 |--------------------------|-----------------------------------------------------------|
-| `setup_scripts/`         | Contains initialization scripts (`generate_5g_certs.sh`, `enable_mtls.sh`, `update_nf_ips.sh`) |
+| `setup_scripts/`         | Contains initialization scripts (`generate_5g_certs.sh`, `build_curl.sg`) |
 | `setup_backhaul.sh`      | Creates `ran0` and `core0` interfaces for network emulation |
 | `teardown_backhaul.sh`   | Cleans up the dummy backhaul network interfaces           |
 | `toggle_pqc.sh`          | Switch between PQC and classical mode (certs + systemd)   |
@@ -67,7 +67,7 @@ The 5G testbed operates over a custom backhaul (dummy interfaces):
 2. **Adds/removes** `OPENSSL_CONF` and `LD_LIBRARY_PATH` in systemd service files
 3. **Reloads** the systemd daemon
 
-No recompilation is needed — just toggle and restart.
+No recompilation is needed, just toggle and restart.
 
 ## Certificate Generation
 
@@ -98,7 +98,7 @@ cd ~/Desktop/PQC/5g/open5gs
 # Clean previous build
 rm -rf builddir
 
-# Configure with custom OpenSSL 3.5.0
+# Configure with custom OpenSSL 3.5.0 
 PKG_CONFIG_PATH=/home/vboxuser/Desktop/PQC/openssl-3.5.0 \
   meson setup builddir --prefix=/usr
 

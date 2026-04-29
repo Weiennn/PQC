@@ -12,7 +12,7 @@ gNB (10.0.1.1)  ════IPSec═══►  secGW  ──plain──►  Core
 ```
 
 - **gNB** initiates an IKEv2 tunnel to the secGW using `aes256-sha384-mlkem768`
-- **secGW** runs in a Linux network namespace (`ns_secgw`) with two legs
+- **secGW** runs in a Linux network namespace (`ns_secgw`) with two interfaces
 - **Core NFs** (AMF, UPF, etc.) receive plain decrypted traffic on `core0`
 - UERANSIM's SCTP (N2) and GTP-U (N3) traffic is tunnelled transparently
 

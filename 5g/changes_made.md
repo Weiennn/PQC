@@ -22,9 +22,9 @@ To enable hybrid Key Encapsulation Mechanism (KEM) methods, follow these steps:
 1. **Compile a compatible OpenSSL version** 
    Find and compile a version of OpenSSL (v3.5.0+) that supports hybrid methods. Install it locally within your project folder. **Do not replace your native OS OpenSSL**, as doing so may break other system dependencies. When compiling dependencies against this, set a custom `PKG_CONFIG_PATH` to point to your new local OpenSSL installation.
 
-2. **Recompile libcurl** Recompile `libcurl` (used for making requests in the Open5GS core) against the new OpenSSL version. Ensure the `PKG_CONFIG_PATH` points to your local OpenSSL directory.
+2. **Recompile libcurl** Recompile `libcurl` (used for making requests in the Open5GS core) against the new OpenSSL version. Ensure the `PKG_CONFIG_PATH` points to your local OpenSSL directory. Use the /setup_scripts/build_curl.sh script.
 
-3. **Recompile libnghttp2** Recompile `libnghttp2` against the new OpenSSL version.
+3. **Recompile libnghttp2** Recompile `libnghttp2` against the new OpenSSL version. Use the /setup_scripts/build_nghttp2.sh script.
 
 4. **Recompile Open5GS** Recompile Open5GS using these custom versions of `libcurl` and `libnghttp2` (makefiles are located in the project library).
 

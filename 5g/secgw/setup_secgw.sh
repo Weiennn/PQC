@@ -22,6 +22,11 @@ SECGW_CORE_IP="10.0.2.1"
 RAN_SUBNET="10.0.1.0/24"
 CORE_SUBNET="10.0.2.0/24"
 GNB_IP="10.0.1.1"
+# Host source IP for reaching the RAN-side of the secGW.
+# We use ran0's existing IP (10.0.1.1) as the src hint on the /32 host route
+# so the kernel doesn't pick 10.0.2.15 (enp0s3) as source. The namespace
+# replies to 10.0.1.1 which is local on ran0, closing the round-trip.
+VETH_RAN_HOST_SRC="10.0.1.1"
 
 echo "=== Setting up Security Gateway Namespace ==="
 
@@ -45,11 +50,18 @@ sudo ip link set "$VETH_CORE_NS" netns "$NS"
 
 # --- Configure host-side interfaces ---
 echo "[3/6] Configuring host-side interfaces..."
-# Attach host-side veths to the existing dummy bridges
-# We bring them up and add them to the same subnets so traffic can flow
 sudo ip link set "$VETH_RAN_HOST" up
 sudo ip link set "$VETH_CORE_HOST" up
-# These don't need IPs — they act as L2 bridges. We add routes instead.
+# NOTE: veth-ran-h intentionally has NO IP address.
+# Adding a /24 here would create a second 10.0.1.0/24 route competing with
+# ran0's connected route, causing unpredictable routing. We fix source-IP
+# selection instead via a 'src' hint on the /32 host route (see Step 5).
+
+# IMPORTANT: If setup_backhaul.sh assigned SECGW_RAN_IP to ran0, remove it now.
+# While secGW is active, 10.0.1.254 must ONLY live in ns_secgw (on eth-ran).
+# If it remains on ran0, the kernel routes packets to 10.0.1.254 via loopback
+# (cache <local>), so IKE_INIT from the gNB charon never reaches the namespace.
+sudo ip addr del "${SECGW_RAN_IP}/24" dev ran0 2>/dev/null || true
 
 # --- Configure namespace-side interfaces ---
 echo "[4/6] Configuring namespace interfaces..."
@@ -65,8 +77,13 @@ sudo ip netns exec "$NS" sysctl -w net.ipv4.ip_forward=1 >/dev/null
 # --- Routing ---
 echo "[5/6] Setting up routes..."
 
-# Host → secGW RAN-side: traffic to 10.0.1.254 goes via veth
-sudo ip route add "${SECGW_RAN_IP}/32" dev "$VETH_RAN_HOST" 2>/dev/null || true
+# Host → secGW RAN-side: /32 route via veth-ran-h with src hint.
+#   src 10.0.1.1  forces the kernel to use ran0's IP as source address.
+#   The namespace replies to 10.0.1.1 (local on ran0), exits via eth-ran,
+#   arrives on veth-ran-h, and the kernel delivers it to the waiting socket.
+#   Without src hint, kernel picks 10.0.2.15 → namespace routes reply via
+#   eth-core → host receives on veth-core-h → ICMP reply dropped.
+sudo ip route add "${SECGW_RAN_IP}/32" dev "$VETH_RAN_HOST" src "${VETH_RAN_HOST_SRC}" 2>/dev/null || true
 # Host → secGW Core-side: traffic to 10.0.2.1 goes via veth
 sudo ip route add "${SECGW_CORE_IP}/32" dev "$VETH_CORE_HOST" 2>/dev/null || true
 

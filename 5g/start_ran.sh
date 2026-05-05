@@ -13,7 +13,7 @@ sleep 2
 
 echo "Starting nr-ue in the background..."
 # Run ue in background and redirect all output to ue.log
-sudo ./UERANSIM/build/nr-ue -c ./UERANSIM/config/open5gs-ue.yaml > ./UERANSIM/logs/ue.log 2>&1 &
+sudo ./UERANSIM/build/nr-ue -c ./UERANSIM/config/open5gs-ue0.yaml > ./UERANSIM/logs/ue.log 2>&1 &
 UE_PID=$!
 
 echo "====================================================="

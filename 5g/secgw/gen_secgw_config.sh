@@ -69,6 +69,7 @@ EOF
 cat > "$DATA_DIR/gnb/swanctl.conf" <<EOF
 connections {
    secgw-tunnel {
+      local_addrs  = $GNB_IP
       remote_addrs = $SECGW_RAN_IP
       proposals = $IKE_PROPOSAL
       local {

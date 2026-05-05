@@ -27,6 +27,11 @@ CURL_INSTALL_DIR="/home/vboxuser/Desktop/PQC/5g/curl-install"
 OPENSSL_PQC_CNF="${SCRIPT_DIR}/openssl_pqc.cnf"
 OPENSSL_CLASSICAL_CNF="${SCRIPT_DIR}/openssl_classical.cnf"
 
+# Custom-built Open5GS binaries (linked against OpenSSL 3.5.0 + custom curl)
+# IMPORTANT: /usr/bin/open5gs-* are the system binaries linked against
+# OpenSSL 3.0.13 and libcurl-gnutls — they will NEVER use PQC groups!
+BUILDDIR="${SCRIPT_DIR}/open5gs/builddir/src"
+
 # NFs with TLS certs
 NF_NAMES=(amf ausf bsf nrf nssf pcf scp sepp1 sepp2 smf udm udr)
 
@@ -35,6 +40,21 @@ SERVICE_NAMES=(
     open5gs-amfd open5gs-ausfd open5gs-bsfd open5gs-nrfd
     open5gs-nssfd open5gs-pcfd open5gs-scpd
     open5gs-smfd open5gs-udmd open5gs-udrd open5gs-upfd
+)
+
+# Map: service binary name -> builddir subdirectory name
+declare -A SVC_SUBDIR=(
+    [open5gs-amfd]="amf"
+    [open5gs-ausfd]="ausf"
+    [open5gs-bsfd]="bsf"
+    [open5gs-nrfd]="nrf"
+    [open5gs-nssfd]="nssf"
+    [open5gs-pcfd]="pcf"
+    [open5gs-scpd]="scp"
+    [open5gs-smfd]="smf"
+    [open5gs-udmd]="udm"
+    [open5gs-udrd]="udr"
+    [open5gs-upfd]="upf"
 )
 
 # LD_LIBRARY_PATH is ALWAYS set (both modes use OpenSSL 3.5.0 + custom libcurl)
@@ -97,10 +117,11 @@ set_env_in_services() {
     local tls_groups="$2"
     local env_conf="Environment=\"OPENSSL_CONF=${conf_file}\""
     local env_groups="Environment=\"OPEN5GS_TLS_GROUPS=${tls_groups}\""
-    echo "[systemd] Setting env in service files..."
+    echo "[systemd] Setting env + ExecStart in service files..."
     echo "  OPENSSL_CONF=${conf_file}"
     echo "  OPEN5GS_TLS_GROUPS=${tls_groups}"
     echo "  LD_LIBRARY_PATH=${OPENSSL_DIR}:${CURL_INSTALL_DIR}/lib"
+    echo "  ExecStart: builddir binaries (OpenSSL 3.5.0 + custom curl)"
     for svc in "${SERVICE_NAMES[@]}"; do
         local svc_file="/lib/systemd/system/${svc}.service"
         [[ -f "${svc_file}" ]] || continue
@@ -114,6 +135,21 @@ set_env_in_services() {
         sed -i "/^\[Service\]/a ${ENV_LD}" "${svc_file}"
         sed -i "/^\[Service\]/a ${env_groups}" "${svc_file}"
         sed -i "/^\[Service\]/a ${env_conf}" "${svc_file}"
+
+        # Rewrite ExecStart to use the custom-built binary in builddir.
+        # The /usr/bin/open5gs-* binaries are linked against system OpenSSL
+        # 3.0.13 (no ML-KEM) and libcurl-gnutls (ignores LD_LIBRARY_PATH).
+        local subdir="${SVC_SUBDIR[${svc}]:-}"
+        if [[ -n "${subdir}" ]]; then
+            local custom_bin="${BUILDDIR}/${subdir}/${svc}"
+            if [[ -f "${custom_bin}" ]]; then
+                # Replace /usr/bin/<svc> with the builddir path, preserve -c flag
+                sed -i "s|^ExecStart=/usr/bin/${svc} |ExecStart=${custom_bin} |" "${svc_file}"
+                echo "  [${svc}] ExecStart -> ${custom_bin}"
+            else
+                echo "  [WARN] ${svc}: builddir binary not found at ${custom_bin}"
+            fi
+        fi
     done
 }
 

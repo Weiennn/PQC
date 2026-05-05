@@ -26,6 +26,10 @@ sudo ip link del "$VETH_CORE_HOST" 2>/dev/null || true
 # Delete namespace
 sudo ip netns del "$NS" 2>/dev/null || true
 
+# Restore secGW RAN IP to ran0 (setup_secgw.sh removed it; put it back
+# so setup_backhaul.sh's state is restored for future runs)
+sudo ip addr add "${SECGW_RAN_IP}/24" dev ran0 2>/dev/null || true
+
 # Cleanup temp files
 rm -f /tmp/charon_secgw.pid /tmp/charon_secgw.log /tmp/charon_secgw.vici
 rm -f /tmp/charon_gnb.pid /tmp/charon_gnb.log /tmp/charon_gnb.vici
